@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message Viewer</title>
+    <style>
+        /* Background like your uploaded image */
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #8f6ed5, #56c8d8, #9be15d);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 30px;
+            color: #fff;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        ul#messageList {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            max-width: 600px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        ul#messageList li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        ul#messageList li a {
+            display: block;
+            padding: 15px 20px;
+            color: #ffffff;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        ul#messageList li a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<button onclick="signInWithRedirect()" style="padding: 10px 20px; border-radius: 8px; background: #ffffff22; color: white; border: none; margin-bottom: 20px; cursor: pointer;">
+    Sign in with Google
+</button>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    // Firebase config
+    const firebaseConfig = {
+        apiKey: "AIzaSyAawx2muQ8ECQCnCRtSQ6fdRDj0YODYndc",
+        authDomain: "online-team-creator.firebaseapp.com",
+        databaseURL: "https://online-team-creator-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "online-team-creator",
+        storageBucket: "online-team-creator.appspot.com",
+        messagingSenderId: "194042712020",
+        appId: "1:194042712020:web:f9f113eba69a5668c49041"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const dbRef = firebase.database().ref("messages");
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const messageList = document.getElementById('messageList');
+
+    function signInWithRedirect() {
+        auth.signInWithRedirect(provider);
+    }
+
+    function loadMessages() {
+        dbRef.on('child_added', (snapshot) => {
+            const message = snapshot.val();
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="${message}" target="_blank">${message}</a>`;
+            messageList.appendChild(li);
+        });
+    }
+
+    // Handle redirect result
+    auth.getRedirectResult()
+        .then((result) => {
+            if (result.user) {
+                console.log("Signed in as:", result.user.displayName);
+                loadMessages();
+            } else {
+                // No user signed in yet
+                signInWithRedirect();
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+            alert("Login failed!");
+        });
+</script>
+<body>
+    <h2>Message Links:</h2>
+    <ul id="messageList"></ul>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAawx2muQ8ECQCnCRtSQ6fdRDj0YODYndc",
+            authDomain: "online-team-creator.firebaseapp.com",
+            databaseURL: "https://online-team-creator-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "online-team-creator",
+            storageBucket: "online-team-creator.appspot.com",
+            messagingSenderId: "194042712020",
+            appId: "1:194042712020:web:f9f113eba69a5668c49041"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        const dbRef = firebase.database().ref("messages");
+
+        dbRef.on('child_added', (snapshot) => {
+            const message = snapshot.val();
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="${message}" target="_blank">${message}</a>`;
+            document.getElementById('messageList').appendChild(li);
+        });
+    </script>
+</body>
+</html>
