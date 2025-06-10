@@ -1,151 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Message Viewer</title>
-    <style>
-        /* Background like your uploaded image */
-        body {
-            margin: 0;
-            font-family: 'Arial', sans-serif;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #8f6ed5, #56c8d8, #9be15d);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 30px;
-            color: #fff;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vanta Chat</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+    }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+    .s-page-1 .s-section-1 .s-section {
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+      z-index: 0;
+    }
 
-        h2 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
+    #chat-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      max-width: 600px;
+      width: 90%;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
 
-        ul#messageList {
-            list-style: none;
-            padding: 0;
-            width: 100%;
-            max-width: 600px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
-            overflow: hidden;
-        }
+    #messages {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #f9f9f9;
+    }
 
-        ul#messageList li {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
 
-        ul#messageList li a {
-            display: block;
-            padding: 15px 20px;
-            color: #ffffff;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
+    .message {
+      margin-bottom: 10px;
+      border-bottom: 1px dashed #ccc;
+      padding-bottom: 5px;
+    }
 
-        ul#messageList li a:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-    </style>
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+  </style>
 </head>
-<button onclick="signInWithRedirect()" style="padding: 10px 20px; border-radius: 8px; background: #ffffff22; color: white; border: none; margin-bottom: 20px; cursor: pointer;">
-    Sign in with Google
-</button>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<body>
+  <div class="s-page-1">
+    <div class="s-section-1">
+      <div class="s-section">
+        <div id="chat-container">
+          <h2>f4x message sender</h2>
+          <div id="messages"></div>
+          <input type="text" id="msg" placeholder="Type your message..." />
+          <input type="file" id="fileInput" />
+          <button onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<script>
-    // Firebase config
+  <!-- Vanta + Three.js Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.birds.min.js"></script>
+  
+  <!-- Firebase -->
+  <script type="module">
+    // Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+
     const firebaseConfig = {
-        apiKey: "AIzaSyAawx2muQ8ECQCnCRtSQ6fdRDj0YODYndc",
-        authDomain: "online-team-creator.firebaseapp.com",
-        databaseURL: "https://online-team-creator-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "online-team-creator",
-        storageBucket: "online-team-creator.appspot.com",
-        messagingSenderId: "194042712020",
-        appId: "1:194042712020:web:f9f113eba69a5668c49041"
+      apiKey: "AIzaSyAawx2muQ8ECQCnCRtSQ6fdRDj0YODYndc",
+      authDomain: "online-team-creator.firebaseapp.com",
+      databaseURL: "https://online-team-creator-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "online-team-creator",
+      storageBucket: "online-team-creator.appspot.com",
+      messagingSenderId: "194042712020",
+      appId: "1:194042712020:web:f9f113eba69a5668c49041",
+      measurementId: "G-E46C08T18C"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    const auth = firebase.auth();
-    const dbRef = firebase.database().ref("messages");
-    const provider = new firebase.auth.GoogleAuthProvider();
-    const messageList = document.getElementById('messageList');
+    const msgRef = collection(db, "chatroom");
 
-    function signInWithRedirect() {
-        auth.signInWithRedirect(provider);
+    // Listen to messages
+    const messagesDiv = document.getElementById("messages");
+    onSnapshot(msgRef, (snapshot) => {
+      messagesDiv.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.classList.add("message");
+
+        if (data.text) div.innerHTML += `<strong>Message:</strong> ${data.text}<br>`;
+        if (data.fileUrl) div.innerHTML += `<a href="${data.fileUrl}" target="_blank">Download File</a><br>`;
+        messagesDiv.appendChild(div);
+      });
+    });
+
+    // Send message
+    async function sendMessage() {
+      const msg = document.getElementById("msg").value;
+      const fileInput = document.getElementById("fileInput");
+      let fileUrl = null;
+
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        fileUrl = await getDownloadURL(storageRef);
+      }
+
+      await addDoc(msgRef, {
+        text: msg || null,
+        fileUrl: fileUrl || null,
+        timestamp: serverTimestamp()
+      });
+
+      document.getElementById("msg").value = "";
+      fileInput.value = null;
     }
+  </script>
 
-    function loadMessages() {
-        dbRef.on('child_added', (snapshot) => {
-            const message = snapshot.val();
-            const li = document.createElement('li');
-            li.innerHTML = `<a href="${message}" target="_blank">${message}</a>`;
-            messageList.appendChild(li);
+  <script>
+    var setVanta = () => {
+      if (window.VANTA) {
+        if (window.vantaEffect) {
+          window.vantaEffect.destroy();
+        }
+
+        window.vantaEffect = window.VANTA.BIRDS({
+          el: ".s-page-1 .s-section-1 .s-section",
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.00,
+          minWidth: 200.00,
+          scale: 1.00,
+          scaleMobile: 1.00,
+
+          // Custom Parameters
+          backgroundColor: 0x000000,
+          backgroundAlpha: 0.9,
+          color1: 0xff0000,
+          color2: 0xffff00,
+          colorMode: "lerpGradient",
+          quantity: 4.0,
+          birdSize: 1.5,
+          wingSpan: 25.0,
+          speedLimit: 4.0,
+          separation: 50.0,
+          alignment: 30.0,
+          cohesion: 20.0
         });
-    }
+      }
+    };
 
-    // Handle redirect result
-    auth.getRedirectResult()
-        .then((result) => {
-            if (result.user) {
-                console.log("Signed in as:", result.user.displayName);
-                loadMessages();
-            } else {
-                // No user signed in yet
-                signInWithRedirect();
-            }
-        })
-        .catch((error) => {
-            console.error(error);
-            alert("Login failed!");
-        });
-</script>
-<body>
-    <h2>Message Links:</h2>
-    <ul id="messageList"></ul>
+    document.addEventListener('DOMContentLoaded', function () {
+      setVanta();
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+      window.addEventListener('resize', function () {
+        if (window.vantaEffect) {
+          window.vantaEffect.resize();
+        }
+      });
+    });
 
-    <script>
-        // Firebase config
-        const firebaseConfig = {
-            apiKey: "AIzaSyAawx2muQ8ECQCnCRtSQ6fdRDj0YODYndc",
-            authDomain: "online-team-creator.firebaseapp.com",
-            databaseURL: "https://online-team-creator-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "online-team-creator",
-            storageBucket: "online-team-creator.appspot.com",
-            messagingSenderId: "194042712020",
-            appId: "1:194042712020:web:f9f113eba69a5668c49041"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-
-        const dbRef = firebase.database().ref("messages");
-
-        dbRef.on('child_added', (snapshot) => {
-            const message = snapshot.val();
-            const li = document.createElement('li');
-            li.innerHTML = `<a href="${message}" target="_blank">${message}</a>`;
-            document.getElementById('messageList').appendChild(li);
-        });
-    </script>
+    // If using Strikingly.com or similar platform
+    var _strk = _strk || [];
+    _strk.push(function () {
+      setVanta();
+      if (window.edit_page) {
+        window.edit_page.Event.subscribe("Page.beforeNewOneFadeIn", setVanta);
+      }
+    });
+  </script>
 </body>
 </html>
